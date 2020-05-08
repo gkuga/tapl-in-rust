@@ -1,0 +1,13 @@
+name: CI
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+jobs:
+  build:
+    runs-on: vvakame/review:4.0
+    steps:
+    - uses: actions/checkout@v2
+    - name: Run a one-line script
+      run: cd notes/src review-pdfmaker config.yml
