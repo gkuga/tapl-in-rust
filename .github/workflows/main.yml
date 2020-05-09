@@ -6,13 +6,23 @@ on:
     branches: [ master ]
 jobs:
   notes:
-    runs-on: vvakame/review:4.0
+    runs-on: ubuntu-latest
+    container:
+      image: vvakame/review:4.0
     steps:
     - uses: actions/checkout@v2
     - name: Run a one-line script
       run: cd notes/src review-pdfmaker config.yml
+    - name: Copy artifact
+      run: mkdir -p artifact && cp -a src/tapl.pdf artifact/
+    - uses: actions/upload-artifact@v1
+      with:
+        name: pdf
+        path: artifact
   build:
-    runs-on: rust:1.43.1
+    runs-on: ubuntu-latest
+    container:
+      image: rust:1.43.1
     steps:
     - uses: actions/checkout@v2
     - name: build
