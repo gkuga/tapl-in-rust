@@ -1,5 +1,6 @@
 use super::lexer::Lexer;
-use super::support::Info;
+use super::lexer::LexerError;
+use super::support::Info::{self, *};
 use super::syntax::{Command, Term};
 use std::sync::mpsc::*;
 use std::thread;
@@ -28,9 +29,8 @@ pub enum Token {
 
 #[derive(Debug, PartialEq)]
 pub enum ParseError {
-    InvalidCharacter,
-    InvalidExpression,
-    EmptyExpression,
+    InvalidToken(Info),
+    EmptyExpression(Info),
 }
 
 pub fn parse(file: String, input: String) -> Result<Vec<Command>, ParseError> {
@@ -47,7 +47,7 @@ pub fn parse(file: String, input: String) -> Result<Vec<Command>, ParseError> {
 }
 
 struct Parser {
-    receiver: Receiver<Token>,
+    receiver: Receiver<Result<Token, LexerError>>,
     token: [Option<Token>; 3],
     peek_count: usize,
 }
@@ -72,7 +72,7 @@ impl Parser {
         if self.peek_count > 0 {
             self.peek_count -= 1;
         } else {
-            let token = self.receiver.recv().unwrap();
+            let token = self.receiver.recv().unwrap().unwrap();
             self.token[0] = Some(token);
         }
         self.token[self.peek_count].clone().unwrap()
@@ -83,7 +83,7 @@ impl Parser {
             return self.token[self.peek_count - 1].clone().unwrap();
         }
         self.peek_count = 1;
-        let token = self.receiver.recv().unwrap();
+        let token = self.receiver.recv().unwrap().unwrap();
         self.token[0] = Some(token);
         self.token[0].clone().unwrap()
     }
@@ -94,7 +94,7 @@ impl Parser {
                 if let Token::SEMI(_) = self.next() {}
                 Ok(Command::Eval(term))
             }
-            _ => Err(ParseError::InvalidExpression),
+            Err(err) => Err(err),
         }
     }
 
@@ -132,7 +132,7 @@ impl Parser {
             }
             t => {
                 eprintln!("{:?}", t);
-                return Err(ParseError::InvalidExpression);
+                return Err(ParseError::InvalidToken(Unknown));
             }
         }
     }

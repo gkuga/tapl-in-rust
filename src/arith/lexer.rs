@@ -1,3 +1,4 @@
+use self::LexerError::*;
 use super::parser::Token::{self, *};
 use super::support::Info;
 use std::sync::mpsc::Sender;
@@ -9,25 +10,22 @@ pub struct Lexer {
     start: usize,
     pos: usize,
     width: usize,
-    token_sender: Sender<Token>,
+    token_sender: Sender<Result<Token, LexerError>>,
     file: String,
     current_line: usize,
     current_column: usize,
 }
 
-#[allow(dead_code)]
 #[derive(Debug, PartialEq)]
 pub enum LexerError {
-    InvalidCharacter((usize, char)),
-    InvalidExpression,
-    EmptyExpression,
+    InvalidCharacter(Info, char),
 }
 
 const LEFT_COMMENT: &str = "/*";
 const RIGHT_COMMENT: &str = "*/";
 
 impl Lexer {
-    pub fn lex(file: String, s: String, sender: Sender<Token>) {
+    pub fn lex(file: String, s: String, sender: Sender<Result<Token, LexerError>>) {
         let mut lexer = Lexer {
             input: s,
             start: 0,
@@ -35,7 +33,7 @@ impl Lexer {
             width: 0,
             token_sender: sender,
             file: file,
-            current_line: 0,
+            current_line: 1,
             current_column: 0,
         };
         lexer.run();
@@ -57,6 +55,10 @@ impl Lexer {
         let c = self.input[self.pos..].chars().next().unwrap();
         self.width = c.len_utf8();
         self.pos += self.width;
+        if c == '\n' {
+            self.current_line += 1;
+            self.current_column = self.pos;
+        }
         Some(c)
     }
 
@@ -70,7 +72,14 @@ impl Lexer {
 
     fn emit(&mut self, token: Token) {
         self.token_sender
-            .send(token)
+            .send(Ok(token))
+            .expect("Unable to send token on channel");
+        self.start = self.pos;
+    }
+
+    fn emit_error(&mut self, err: LexerError) {
+        self.token_sender
+            .send(Err(err))
             .expect("Unable to send token on channel");
         self.start = self.pos;
     }
@@ -141,22 +150,22 @@ impl Lexer {
                 c if c.is_numeric() => return Some(StateFunction(Lexer::lex_number)),
                 c if c.is_alphanumeric() => return Some(StateFunction(Lexer::lex_identifier)),
                 ';' => {
-                    l.emit(Token::SEMI(l.create_info()));
+                    l.emit(SEMI(l.create_info()));
                 }
                 '(' => {
-                    l.emit(Token::LPAREN(l.create_info()));
+                    l.emit(LPAREN(l.create_info()));
                 }
                 ')' => {
-                    l.emit(Token::RPAREN(l.create_info()));
+                    l.emit(RPAREN(l.create_info()));
                 }
                 '/' if l.is_left_comment() => {
                     l.next();
                     l.ignore();
                     return Some(StateFunction(Lexer::lex_comment));
                 }
-                _ => {
-                    // TODO: emit invalid character error
-                    l.ignore()
+                c => {
+                    l.emit_error(InvalidCharacter(l.create_info(), c));
+                    return None;
                 }
             }
         }

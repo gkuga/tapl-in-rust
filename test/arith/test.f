@@ -1,4 +1,4 @@
-/* true Examples for testing */
+/* Examples for testing */
 
 true;
 if false then true else false;
