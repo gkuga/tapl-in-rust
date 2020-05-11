@@ -1,4 +1,5 @@
-use crate::arith::parser::Token;
+use super::parser::Token::{self, *};
+use super::support::Info;
 use std::sync::mpsc::Sender;
 
 struct StateFunction(fn(&mut Lexer) -> Option<StateFunction>);
@@ -9,6 +10,9 @@ pub struct Lexer {
     pos: usize,
     width: usize,
     token_sender: Sender<Token>,
+    file: String,
+    current_line: usize,
+    current_column: usize,
 }
 
 #[allow(dead_code)]
@@ -23,13 +27,16 @@ const LEFT_COMMENT: &str = "/*";
 const RIGHT_COMMENT: &str = "*/";
 
 impl Lexer {
-    pub fn lex(s: String, sender: Sender<Token>) {
+    pub fn lex(file: String, s: String, sender: Sender<Token>) {
         let mut lexer = Lexer {
             input: s,
             start: 0,
             pos: 0,
             width: 0,
             token_sender: sender,
+            file: file,
+            current_line: 0,
+            current_column: 0,
         };
         lexer.run();
     }
@@ -111,16 +118,20 @@ impl Lexer {
 
     fn get_keyword(&self, seek: &str) -> Option<Token> {
         match seek {
-            "if" => Some(Token::IF),
-            "then" => Some(Token::THEN),
-            "else" => Some(Token::ELSE),
-            "true" => Some(Token::TRUE),
-            "false" => Some(Token::FALSE),
-            "succ" => Some(Token::SUCC),
-            "pred" => Some(Token::PRED),
-            "iszero" => Some(Token::ISZERO),
+            "if" => Some(IF(self.create_info())),
+            "then" => Some(THEN(self.create_info())),
+            "else" => Some(ELSE(self.create_info())),
+            "true" => Some(TRUE(self.create_info())),
+            "false" => Some(FALSE(self.create_info())),
+            "succ" => Some(SUCC(self.create_info())),
+            "pred" => Some(PRED(self.create_info())),
+            "iszero" => Some(ISZERO(self.create_info())),
             _ => None,
         }
+    }
+
+    fn create_info(&self) -> Info {
+        Info::FileInfo(self.file.clone(), self.current_line, self.current_column)
     }
 
     fn lex_arith(l: &mut Lexer) -> Option<StateFunction> {
@@ -130,13 +141,13 @@ impl Lexer {
                 c if c.is_numeric() => return Some(StateFunction(Lexer::lex_number)),
                 c if c.is_alphanumeric() => return Some(StateFunction(Lexer::lex_identifier)),
                 ';' => {
-                    l.emit(Token::SEMI);
+                    l.emit(Token::SEMI(l.create_info()));
                 }
                 '(' => {
-                    l.emit(Token::LPAREN);
+                    l.emit(Token::LPAREN(l.create_info()));
                 }
                 ')' => {
-                    l.emit(Token::RPAREN);
+                    l.emit(Token::RPAREN(l.create_info()));
                 }
                 '/' if l.is_left_comment() => {
                     l.next();
@@ -149,13 +160,13 @@ impl Lexer {
                 }
             }
         }
-        l.emit(Token::EOF);
+        l.emit(Token::EOF(l.create_info()));
         None
     }
 
     fn lex_number(l: &mut Lexer) -> Option<StateFunction> {
         l.accept_run_numeric();
-        l.emit(Token::INTV);
+        l.emit(Token::INTV(l.create_info()));
         Some(StateFunction(Lexer::lex_arith))
     }
 

@@ -17,19 +17,21 @@ pub fn eval(term: Term) -> Result<Term, EvaluateError> {
 
 fn _eval(term: Term) -> Result<Term, EvaluateError> {
     match term {
-        If(bt1, bt2, _) if *bt1 == True => Ok(*bt2),
-        If(bt1, _, bt3) if *bt1 == False => Ok(*bt3),
-        If(bt1, bt2, bt3) => Ok(If(Box::new(_eval(*bt1)?), bt2, bt3)),
-        Succ(bt) => Ok(Succ(Box::new(_eval(*bt)?))),
-        Pred(bt1) => match *bt1 {
-            Zero => Ok(Zero),
-            Succ(bt2) if is_numericval(&(*bt2)) => Ok(*bt2),
-            t => Ok(Pred(Box::new(_eval(t)?))),
+        If(i, bt1, bt2, bt3) => match *bt1 {
+            True(_) => Ok(*bt2),
+            False(_) => Ok(*bt3),
+            _ => Ok(If(i, Box::new(_eval(*bt1)?), bt2, bt3)),
         },
-        IsZero(bt1) => match *bt1 {
-            Zero => Ok(True),
-            Succ(bt2) if is_numericval(&(*bt2)) => Ok(False),
-            t => Ok(IsZero(Box::new(_eval(t)?))),
+        Succ(i, bt) => Ok(Succ(i, Box::new(_eval(*bt)?))),
+        Pred(i, bt) => match *bt {
+            Zero(i) => Ok(Zero(i)),
+            Succ(_, bt) if is_numericval(&(*bt)) => Ok(*bt),
+            t => Ok(Pred(i, Box::new(_eval(t)?))),
+        },
+        IsZero(i, bt) => match *bt {
+            Zero(i) => Ok(True(i)),
+            Succ(i, bt) if is_numericval(&(*bt)) => Ok(False(i)),
+            t => Ok(IsZero(i, Box::new(_eval(t)?))),
         },
         _ => Err(EvaluateError::NoRuleApplies),
     }
@@ -37,8 +39,8 @@ fn _eval(term: Term) -> Result<Term, EvaluateError> {
 
 fn is_numericval(term: &Term) -> bool {
     match term {
-        Zero => true,
-        Succ(t) => is_numericval(t),
+        Zero(_) => true,
+        Succ(_, t) => is_numericval(t),
         _ => false,
     }
 }

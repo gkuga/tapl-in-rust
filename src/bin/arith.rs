@@ -10,7 +10,7 @@ fn main() {
         std::process::exit(1);
     }
     let content = fs::read_to_string(&args[1]).unwrap();
-    let res = parse(content).unwrap();
+    let res = parse(args[1].clone(), content).unwrap();
     for term in res {
         let Command::Eval(t) = term;
         println!("{}", eval(t).unwrap());

@@ -1,4 +1,5 @@
 use self::Term::*;
+use super::support::Info;
 use std::fmt;
 
 #[derive(PartialEq, Clone, Hash, Eq, Debug)]
@@ -8,25 +9,25 @@ pub enum Command {
 
 #[derive(PartialEq, Clone, Hash, Eq, Debug)]
 pub enum Term {
-    True,
-    False,
-    If(Box<Term>, Box<Term>, Box<Term>),
-    Zero,
-    Succ(Box<Term>),
-    Pred(Box<Term>),
-    IsZero(Box<Term>),
+    True(Info),
+    False(Info),
+    If(Info, Box<Term>, Box<Term>, Box<Term>),
+    Zero(Info),
+    Succ(Info, Box<Term>),
+    Pred(Info, Box<Term>),
+    IsZero(Info, Box<Term>),
 }
 
 impl fmt::Display for Term {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            True => write!(f, "true"),
-            False => write!(f, "false"),
-            If(ref t1, ref t2, ref t3) => write!(f, "(If {} {} {})", t1, t2, t3),
-            Zero => write!(f, "0"),
-            Succ(ref t) => write!(f, "{}", (*t).to_string().parse::<i32>().unwrap() + 1),
-            Pred(ref t) => write!(f, "(pred {})", t),
-            IsZero(ref t) => write!(f, "(iszero {})", t),
+            True(_) => write!(f, "true"),
+            False(_) => write!(f, "false"),
+            If(_, ref t1, ref t2, ref t3) => write!(f, "(If {} {} {})", t1, t2, t3),
+            Zero(_) => write!(f, "0"),
+            Succ(_, ref t) => write!(f, "{}", (*t).to_string().parse::<i32>().unwrap() + 1),
+            Pred(_, ref t) => write!(f, "(pred {})", t),
+            IsZero(_, ref t) => write!(f, "(iszero {})", t),
         }
     }
 }
