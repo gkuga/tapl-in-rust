@@ -13,6 +13,6 @@ fn main() {
     let res = parse(args[1].clone(), content).unwrap();
     for term in res {
         let Command::Eval(t) = term;
-        println!("{}", eval(t).unwrap());
+        println!("{}", big_step_eval(t).unwrap());
     }
 }
