@@ -130,14 +130,92 @@ t \longrightarrow^* v \equiv t \Downarrow v
 
 @<eq>{bigstep}を示すために@<eq>{proposition1}と@<eq>{proposition2}を順に証明する。
 
+まず@<eq>{proposition1}について。
+
 //texequation[proposition1][]{
-t \longrightarrow^* v \ \to \ t \Downarrow v
+P(t) = t \longrightarrow^* v \ \to \ t \Downarrow v
 //}
 
-@<m>{t}の
+@<m>{\text{depth\}(t)=0}の時、@<m>{t={true,false,0\}}であり@<m>{\text{B-V\small{ALUE\}\}}より@<eq>{proposition1}が成り立つ。よって@<eq>{assum0}である。
+
+//texequation[assum0][]{
+depth(t) = 0 \to P(t)
+//}
+
+@<eq>{assum1}と仮定する。
+
+//texequation[assum1][]{
+\text{depth}(r)<\text{depth}(s) \to P(r)
+//}
+
+@<eq>{assum2}の時：
+
+//texequation[assum2][]{
+s=\text{if}\ s_1\ \text{then}\ s_2\ \text{else}\ s_3 \land s_1 \longrightarrow^* true
+//}
+
+@<m>{s \longrightarrow^* s_2}である。
+
+帰納法の仮定により、@<eq>{theorem1}と@<eq>{theorem2}が成り立つ。
+
+//texequation[theorem1][]{
+P(s_1) = s_1 \longrightarrow^* true \ \to \ s_1 \Downarrow true
+//}
+
+//texequation[theorem2][]{
+P(s_2) = s_2 \longrightarrow^* v_2 \ \to \ s_2 \Downarrow v_2
+//}
+
+@<eq>{theorem1}と@<eq>{theorem1}と@<m>{\text{B-I\small{F\}\normalsize{T\}\small{RUE\}\}}により@<eq>{theorem3}が成り立つ。
+
+//texequation[theorem3][]{
+s \Downarrow v_2
+//}
+
+したがって@<m>{P(s)}が成り立つ。
+
+@<eq>{assum3}の時：
+
+//texequation[assum3][]{
+s=\text{if}\ s_1\ \text{then}\ s_2\ \text{else}\ s_3 \land s_1 \longrightarrow^* false
+//}
+
+同様に@<m>{P(s)}が成り立つ。
+
+@<m>{\text{succ, pred, iszero\}}においても同様の議論で@<m>{P(s)}が証明でき、結果@<eq>{proposition1}が成り立つ。
+
+次に@<eq>{proposition2}について。
 
 //texequation[proposition2][]{
-t \Downarrow v \ \to \ t \longrightarrow^* v
+Q(t) = t \Downarrow v \ \to \ t \longrightarrow^* v
 //}
+
+@<m>{T(s)}を@<m>{s}の任意の直接の部分項の集合とする。このとき@<eq>{assum4}と仮定する。
+
+//texequation[assum4][]{
+r \in T(s) \to Q(r)
+//}
+
+@<m>{s}が部分項を持たない時、つまり@<m>|s \in \{true,false,0\} \to Q(s)|は自明である。部分項からなる項の時を場合分けして@<m>{Q(s)}を証明する。
+
+@<eq>{assum5}の時：
+
+//texequation[assum5][]{
+s=\text{if}\ s_1\ \text{then}\ s_2\ \text{else}\ s_3 \land s_1 \Downarrow true
+//}
+
+帰納法の仮定により、@<eq>{theorem4}と@<eq>{theorem5}が成り立つ。
+
+//texequation[theorem4][]{
+Q(s_1) = s_1 \Downarrow true \ \to \ s_1 \longrightarrow^* true
+//}
+
+//texequation[theorem5][]{
+Q(s_2) = s_2 \Downarrow v_2 \ \to \ s_2 \longrightarrow^* v_2
+//}
+
+@<eq>{theorem4}と@<eq>{theorem5}により@<m>{Q(s)}が成り立つ。
+
+...後で清書
 
 == 演習 3.5.18.
