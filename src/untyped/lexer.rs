@@ -1,6 +1,7 @@
 use self::LexerError::*;
 use super::parser::Token::{self, *};
 use super::support::Info;
+use super::support::WithInfo;
 use std::sync::mpsc::Sender;
 
 struct StateFunction(fn(&mut Lexer) -> Option<StateFunction>);
@@ -19,6 +20,7 @@ pub struct Lexer {
 #[derive(Debug, PartialEq)]
 pub enum LexerError {
     InvalidCharacter(Info, char),
+    UnterminatedComment(Info),
 }
 
 const LEFT_COMMENT: &str = "/*";
@@ -40,7 +42,7 @@ impl Lexer {
     }
 
     fn run(&mut self) {
-        let mut state = Some(StateFunction(Lexer::lex_arith));
+        let mut state = Some(StateFunction(Lexer::lex_untyped));
         while let Some(StateFunction(next_state)) = state {
             state = next_state(self)
         }
@@ -101,16 +103,6 @@ impl Lexer {
         self.backup();
     }
 
-    fn accept_run_ascii_digit(&mut self) {
-        while let Some(c) = self.next() {
-            if c.is_ascii_digit() {
-                continue;
-            }
-            break;
-        }
-        self.backup();
-    }
-
     fn accept_run_ascii_alphanumeric(&mut self) {
         while let Some(c) = self.next() {
             if c.is_ascii_alphanumeric() {
@@ -127,14 +119,7 @@ impl Lexer {
 
     fn get_keyword(&self, seek: &str) -> Option<Token> {
         match seek {
-            "if" => Some(IF(self.create_info())),
-            "then" => Some(THEN(self.create_info())),
-            "else" => Some(ELSE(self.create_info())),
-            "true" => Some(TRUE(self.create_info())),
-            "false" => Some(FALSE(self.create_info())),
-            "succ" => Some(SUCC(self.create_info())),
-            "pred" => Some(PRED(self.create_info())),
-            "iszero" => Some(ISZERO(self.create_info())),
+            "lambda" => Some(LAMBDA(self.create_info())),
             _ => None,
         }
     }
@@ -143,11 +128,17 @@ impl Lexer {
         Info::FileInfo(self.file.clone(), self.current_line, self.current_column)
     }
 
-    fn lex_arith(l: &mut Lexer) -> Option<StateFunction> {
+    fn create_withinfo(&self, v: &str) -> WithInfo {
+        WithInfo {
+            i: Info::FileInfo(self.file.clone(), self.current_line, self.current_column),
+            v: String::from(v),
+        }
+    }
+
+    fn lex_untyped(l: &mut Lexer) -> Option<StateFunction> {
         while let Some(c) = l.next() {
             match c {
                 c if c.is_whitespace() => l.ignore(),
-                c if c.is_ascii_digit() => return Some(StateFunction(Lexer::lex_number)),
                 c if c.is_ascii_alphabetic() => return Some(StateFunction(Lexer::lex_identifier)),
                 ';' => {
                     l.emit(SEMI(l.create_info()));
@@ -158,10 +149,19 @@ impl Lexer {
                 ')' => {
                     l.emit(RPAREN(l.create_info()));
                 }
+                '.' => {
+                    l.emit(DOT(l.create_info()));
+                }
+                '_' => {
+                    l.emit(USCORE(l.create_info()));
+                }
                 '/' if l.is_left_comment() => {
                     l.next();
                     l.ignore();
                     return Some(StateFunction(Lexer::lex_comment));
+                }
+                '/' => {
+                    l.emit(SLASH(l.create_info()));
                 }
                 c => {
                     l.emit_error(InvalidCharacter(l.create_info(), c));
@@ -173,19 +173,16 @@ impl Lexer {
         None
     }
 
-    fn lex_number(l: &mut Lexer) -> Option<StateFunction> {
-        l.accept_run_ascii_digit();
-        l.emit(Token::INTV(l.create_info()));
-        Some(StateFunction(Lexer::lex_arith))
-    }
-
     fn lex_identifier(l: &mut Lexer) -> Option<StateFunction> {
         l.accept_run_ascii_alphanumeric();
         let word = &l.input[l.start..l.pos];
         if let Some(token) = l.get_keyword(word) {
             l.emit(token);
+        } else if word.chars().next().unwrap().is_ascii_lowercase() {
+            let token = Token::LCID(l.create_withinfo(word));
+            l.emit(token);
         }
-        Some(StateFunction(Lexer::lex_arith))
+        Some(StateFunction(Lexer::lex_untyped))
     }
 
     fn lex_comment(l: &mut Lexer) -> Option<StateFunction> {
@@ -194,7 +191,7 @@ impl Lexer {
                 '*' if &l.input[l.start..(l.start + RIGHT_COMMENT.len())] == RIGHT_COMMENT => {
                     l.next();
                     l.ignore();
-                    return Some(StateFunction(Lexer::lex_arith));
+                    return Some(StateFunction(Lexer::lex_untyped));
                 }
                 _ => {
                     l.ignore();
@@ -202,7 +199,7 @@ impl Lexer {
                 }
             }
         }
-        // TODO: error
+        l.emit_error(UnterminatedComment(l.create_info()));
         None
     }
 }
