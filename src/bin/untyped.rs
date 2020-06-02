@@ -15,7 +15,8 @@ fn main() {
         match term {
             Command::Bind(_, x, _) => println!("{}", x),
             Command::Eval(_, t) => {
-                println!("{}", eval(Vec::<(String, Binding)>::new(), t).unwrap());
+                let (_, term) = big_step_eval(Vec::<(String, Binding)>::new(), t).unwrap();
+                println!("{}", term);
             }
         }
     }

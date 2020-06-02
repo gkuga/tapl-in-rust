@@ -8,10 +8,13 @@ pub enum EvaluateError {
     InvalidApplies,
 }
 
-pub fn eval(ctx: Vec<(String, Binding)>, term: Term) -> Result<Term, EvaluateError> {
-    match _eval(ctx, term.clone()) {
+pub fn eval(
+    ctx: Vec<(String, Binding)>,
+    term: Term,
+) -> Result<(Vec<(String, Binding)>, Term), EvaluateError> {
+    match _eval(ctx.clone(), term.clone()) {
         Ok((ctx, t)) => eval(ctx, t),
-        Err(EvaluateError::NoRuleApplies) => Ok(term),
+        Err(EvaluateError::NoRuleApplies) => Ok((ctx, term)),
         Err(e) => Err(e),
     }
 }
@@ -34,6 +37,22 @@ fn _eval(
         return Ok((ctx, App(i, Box::new(t), t2)));
     }
     Err(EvaluateError::NoRuleApplies)
+}
+
+pub fn big_step_eval(
+    ctx: Vec<(String, Binding)>,
+    term: Term,
+) -> Result<(Vec<(String, Binding)>, Term), EvaluateError> {
+    if let App(_, t1, t2) = term.clone() {
+        if let Ok((ctx, Abs(_, _, t12))) = big_step_eval(ctx.clone(), *t1) {
+            if let Ok((ctx, v2)) = big_step_eval(ctx, *t2.clone()) {
+                if is_val(&v2) {
+                    return Ok((ctx, apply(v2, *t12)));
+                }
+            }
+        }
+    }
+    Ok((ctx, term))
 }
 
 fn is_val(term: &Term) -> bool {
