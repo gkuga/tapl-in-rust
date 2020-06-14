@@ -1,8 +1,15 @@
 #PREDEF:
 
 CHAPS:
+  - chap02.re
   - chap03.re
   - chap04.re
+  - chap05.re
+  - chap06.re
+  - chap07.re
+  - chap08.re
+  - chap09.re
+
 
 #APPENDIX:
 
