@@ -1,4 +1,4 @@
-\ProvidesClass{review-base}[2020/01/02]
+\ProvidesClass{review-base}[2022/07/25]
 \RequirePackage{ifthen}
 \@ifundefined{Hy@Info}{% for jsbook.cls
   \RequirePackage[dvipdfmx,bookmarks=true,bookmarksnumbered=true]{hyperref}
@@ -40,6 +40,9 @@
 \RequirePackage{amsthm}
 \RequirePackage{bm}
 \RequirePackage{tabularx}
+\RequirePackage{endnotesj}
+
+\def\enoteheading{}% endnotesj.styの後注前見出しおよび空行の出力を抑制
 
 %% if you use @<u>{} (underline), use jumoline.sty
 \IfFileExists{jumoline.sty}{
@@ -48,6 +51,11 @@
 
 \long\def\review@ifempty#1{\expandafter\ifx\expandafter\relax\detokenize{#1}\relax\expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi}
 
+%% pass bbox setting to extractbb of graphicx
+\ifdefined\review@bbox
+  \def\Gin@pagebox{\review@bbox}
+\fi
+
 \newenvironment{shadedb}{%
   \def\FrameCommand{\fboxsep=\FrameSep \colorbox{shadecolorb}}%
   \MakeFramed {\FrameRestore}}%
@@ -55,26 +63,17 @@
 
 \newcommand{\parasep}{\vspace*{3zh}}
 
-\newcommand*\PDFDocumentInformation[1]{%
-  \AtBeginShipoutFirst{\special{pdf:docinfo <<#1>>}}}
-\@onlypreamble\PDFDocumentInformation
-
-\PDFDocumentInformation{
-  /Title    (\review@booktitlename)
-  /Author   (\review@autnames)
-  % /Subject  ()
-  % /Keywords (,,)
-  /Creator  (Re:VIEW \review@reviewversion, with LaTeX)
-}
-
 \RequirePackage{pxrubrica}
 \@ifpackagelater{pxrubrica}{2017/04/20}{%
 \rubysetup{J}}{%
 \rubysetup{g}}
 
+\DeclareRobustCommand{\reviewtcy}[1]{\PackageError{review-base}{\reviewtcy is not allowed in yoko mode}{}}
+
 \ifthenelse{\equal{\review@documentclass}{utbook} \OR \equal{\review@documentclass}{tbook}}{%
 \newcommand{\headfont}{\gtfamily\sffamily\bfseries}
 \RequirePackage{plext}
+\DeclareRobustCommand{\reviewtcy}[1]{\rensuji{#1}}
 }{%
 }
 
@@ -119,8 +118,8 @@
 
 \newenvironment{reviewdummyimage}{%
   \begin{figure}
-    \begin{center}\begin{alltt}}{%
-    \end{alltt}\end{center}
+    \begin{center}}{%
+    \end{center}
   \end{figure}}
 
 \DeclareRobustCommand{\reviewincludegraphics}[2][]{%
@@ -205,18 +204,19 @@
 \newcommand{\reviewtableref}[2]{\review@intn@table #1}
 \newcommand{\reviewlistref}[1]{\review@intn@list #1}
 \newcommand{\reviewequationref}[1]{\review@intn@equation #1}
-\newcommand{\reviewbibref}[2]{#1}
-\newcommand{\reviewcolumnref}[2]{#1}
-\newcommand{\reviewsecref}[2]{#1}
+\newcommand{\reviewbibref}[2]{\hyperref[#2]{#1}}
+\newcommand{\reviewcolumnref}[2]{#1}% XXX:ハイパーリンクにはreviewcolumn側の調整が必要
+\newcommand{\reviewchapref}[2]{\hyperref[#2]{#1}}
+\newcommand{\reviewsecref}[2]{\hyperref[#2]{#1}}
 
 \newenvironment{reviewpart}{%
 \setcounter{section}{0}%
 \renewcommand{\thesection}{\thepart.\@arabic\c@section}%
 }{}
 
-\newcommand{\reviewminicolumntitle}[1]{%
+\newcommand{\reviewminicolumntitle}[2]{%
 \review@ifempty{#1}{}{%
-  {\large \review@intn@memohead{}: #1}\\}}
+  {\large ■#2: #1}\\}}
 
 \renewcommand{\contentsname}{\review@toctitle}
 
@@ -226,35 +226,35 @@
 
 \newenvironment{reviewnote}[1][]{%
   \begin{reviewminicolumn}
-\review@ifempty{#1}{}{\reviewminicolumntitle{#1}}
+  \reviewminicolumntitle{#1}{\review@intn@notehead}
 }{\end{reviewminicolumn}}
 \newenvironment{reviewmemo}[1][]{%
   \begin{reviewminicolumn}
-  \reviewminicolumntitle{#1}
+  \reviewminicolumntitle{#1}{\review@intn@memohead}
 }{\end{reviewminicolumn}}
 \newenvironment{reviewtip}[1][]{%
   \begin{reviewminicolumn}
-  \reviewminicolumntitle{#1}
+  \reviewminicolumntitle{#1}{\review@intn@tiphead}
 }{\end{reviewminicolumn}}
 \newenvironment{reviewinfo}[1][]{%
   \begin{reviewminicolumn}
-  \reviewminicolumntitle{#1}
+  \reviewminicolumntitle{#1}{\review@intn@infohead}
 }{\end{reviewminicolumn}}
 \newenvironment{reviewwarning}[1][]{%
   \begin{reviewminicolumn}
-  \reviewminicolumntitle{#1}
+  \reviewminicolumntitle{#1}{\review@intn@warninghead}
 }{\end{reviewminicolumn}}
 \newenvironment{reviewimportant}[1][]{%
   \begin{reviewminicolumn}
-  \reviewminicolumntitle{#1}
+  \reviewminicolumntitle{#1}{\review@intn@importanthead}
 }{\end{reviewminicolumn}}
 \newenvironment{reviewcaution}[1][]{%
   \begin{reviewminicolumn}
-  \reviewminicolumntitle{#1}
+  \reviewminicolumntitle{#1}{\review@intn@cautionhead}
 }{\end{reviewminicolumn}}
 \newenvironment{reviewnotice}[1][]{%
   \begin{reviewminicolumn}
-  \reviewminicolumntitle{#1}
+  \reviewminicolumntitle{#1}{\review@intn@noticehead}
 }{\end{reviewminicolumn}}
 
 \DeclareRobustCommand{\reviewkw}[1]{\textbf{\textgt{#1}}}
@@ -274,8 +274,14 @@
   \def\reviewballoon#1{#1}
   \def\reviewbou#1{#1}
   \def\reviewkw#1{#1}
+  \def\reviewinsert#1{#1}
   \def\reviewstrike#1{#1}
   \def\reviewunderline#1{#1}
+  \def\reviewtt#1{#1}
+  \def\reviewcode#1{#1}
+  \def\reviewtti#1{#1}
+  \def\reviewttb#1{#1}
+  \let\reviewicon\@gobble
 }
 \newif\ifreview@ba@break
 \def\review@ba@end{\review@ba@end@}
@@ -321,21 +327,21 @@
   \review@ba@breaktrue
   \review@break@all@a
 }
-\DeclareRobustCommand{\reviewtt}[1]{{\ttfamily\reviewbreakall{#1}}}
-\DeclareRobustCommand{\reviewcode}[1]{{\ttfamily\reviewbreakall{#1}}}
-\DeclareRobustCommand{\reviewtti}[1]{{\ttfamily\itshape\reviewbreakall{#1}}}
-\DeclareRobustCommand{\reviewttb}[1]{{\ttfamily\bfseries\reviewbreakall{#1}}}
+\DeclareRobustCommand{\reviewtt}[1]{{\frenchspacing\ttfamily\reviewbreakall{#1}}}
+\DeclareRobustCommand{\reviewcode}[1]{{\frenchspacing\ttfamily\reviewbreakall{#1}}}
+\DeclareRobustCommand{\reviewtti}[1]{{\frenchspacing\ttfamily\itshape\reviewbreakall{#1}}}
+\DeclareRobustCommand{\reviewttb}[1]{{\frenchspacing\ttfamily\bfseries\reviewbreakall{#1}}}
 
 \DeclareRobustCommand{\reviewbou}[1]{\kenten{#1}}
 
-%% @<del> is ignored in LaTeX with default style
-\DeclareRobustCommand{\reviewstrike}[1]{#1}
+\DeclareRobustCommand{\reviewinsert}[1]{\Underline{#1}}
+\DeclareRobustCommand{\reviewstrike}[1]{\Midline{#1}}
+\DeclareRobustCommand{\reviewicon}[1]{\includegraphics[]{#1}}
+% アイコンの高さを文字の高さに合わせたいときには、以下をreview-custom.styに記述してください:
+% \DeclareRobustCommand{\reviewicon}[1]{\includegraphics[height=0.9zw]{#1}}
 
 %%%% for ulem.sty:
 %%\renewcommand{\reviewstrike}[1]{\sout{#1}}
-%%
-%%%% for jumoline.sty:
-%%\renewcommand{\reviewstrike}[1]{\Middleline{#1}}
 
 \newcommand{\reviewth}[1]{\textgt{#1}}
 \newcommand{\reviewtitlefont}[0]{\usefont{T1}{phv}{b}{n}\gtfamily}
@@ -371,6 +377,28 @@
 \fi
 \ifdefined\appendixname
   \renewcommand{\appendixname}{\reviewappendixname}
+\fi
+
+% PDF meta information
+\def\recls@tmp{ebook}\ifx\recls@cameraready\recls@tmp
+\hypersetup{
+    pdftitle={\review@booktitlename},
+    pdfauthor={\ifdefined\review@autnames\review@autnames\fi},
+    pdfcreator={Re:VIEW \review@reviewversion, with LaTeX}
+  }
+\else
+\newcommand*\PDFDocumentInformation[1]{%
+  \AtBeginShipoutFirst{\special{pdf:docinfo <<#1>>}}}
+\@onlypreamble\PDFDocumentInformation
+
+% for non hyperref. escaped character will be displayed funny...
+\PDFDocumentInformation{
+  /Title    (\review@booktitlename)
+  \ifdefined\review@autnames /Author   (\review@autnames)\fi
+  % /Subject  ()
+  % /Keywords (,,)
+  /Creator  (Re:VIEW \review@reviewversion, with LaTeX)
+}
 \fi
 
 %% maxwidth is the original width if it is less than linewidth
@@ -417,6 +445,9 @@
 
 \if@reclscover
   \ifdefined\review@coverimage
+    \ifrecls@coverfitpage
+       \def\review@coverimageoption{width=\paperwidth,height=\paperheight}
+    \fi
     \def\reviewcoverpagecont{%
       \expandafter\includefullpagegraphics\expandafter[\review@coverimageoption]{\review@coverimage}
       \cleardoublepage

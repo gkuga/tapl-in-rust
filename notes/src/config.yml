@@ -5,7 +5,7 @@
 # このファイルはUTF-8エンコーディングで記述してください。
 
 # この設定ファイルでサポートするRe:VIEWのバージョン番号。
-review_version: 4.0
+review_version: 5.0
 
 # ほかの設定ファイルの継承を指定できる。同じパラメータに異なる値がある場合は、
 # 呼び出し元の値が優先される。
@@ -67,14 +67,14 @@ aut: ["gkuga"]
 # contact: 連絡先
 
 # 刊行日(省略した場合は実行時の日付)
-date: 2020-05-08
+date: 2024-08-21
 # 発行年月。YYYY-MM-DD形式による配列指定。省略した場合はdateを使用する
 # 複数指定する場合は次のように記述する
 # [["初版第1刷の日付", "初版第2刷の日付"], ["第2版第1刷の日付"]]
 # 日付の後ろを空白文字で区切り、任意の文字列を置くことも可能。
-history: [["2020-05-08"]]
+history: [["2024-08-21"]]
 # 権利表記(配列で複数指定可)
-# rights: (C) 2016-2019 Re:VIEW Developers
+# rights: (C) 2016-2020 Re:VIEW Developers
 # description: 説明
 # subject: 短い説明用タグ(配列で複数指定可)
 # type: 書籍のカテゴリーなど(配列で複数指定可)
@@ -87,11 +87,14 @@ history: [["2020-05-08"]]
 debug: null
 
 # 固有IDに使用するドメイン。指定しない場合には、時刻に基づくランダムUUIDが入る
-# urnid: urn:uid:http://example.com/book-title/
+# urnid: urn:uuid:ffffffff-ffff-ffff-ffff-ffffffffffff
 #
 # ISBN。省略した場合はurnidが入る
 # isbn: null
 #
+# @<chap>, @<chapref>, @<title>, @<hd>命令をハイパーリンクにする(nullでハイパーリンクにしない)
+# chapterlink: true
+
 # HTMLファイルの拡張子(省略した場合はhtml)
 # htmlext: html
 #
@@ -184,19 +187,35 @@ coverimage: cover.jpg
 # //table命令における列の区切り文字。tabs (1文字以上のタブ文字区切り。デフォルト), singletab (1文字のタブ文字区切り), spaces (1文字以上のスペースまたはタブ文字の区切り), verticalbar ("0個以上の空白 | 0個以上の空白"の区切り)
 # table_row_separator: tabs
 
-# review-vol向けのヒント情報
-# 1ページの行数文字数と1kbごとのページ数を用紙サイズで指定する(A5 or B5)
+# 複数行から段落を結合する際、前後のUnicode文字種に基づき必要に応じて空白文字を挿入するか
+# 省略した場合はnull (挿入しない)。別途unicode-eaw gemファイルが必要
+# join_lines_by_lang: null
+
+# 図・表・コードリスト・数式のキャプション位置。
+# 値はtop（上）またはbottom（下）でデフォルトは以下のとおり
+# caption_position:
+#   image: bottom
+#   table: top
+#   list: top
+#   equation: top
+
+# review-toc向けのヒント情報
+# (文字幅を考慮した行数計測には、別途unicode-eaw gemファイルが必要)
+# ページあたりの行数文字数を用紙サイズで指定する(A5 or B5)
 # page_metric: A5
 #
 # あるいは、配列で指定することもできる
-# 各数字の意味は、順にリストの行数、リストの1行字数、テキストの行数、テキストの1行字数、1kバイトごとのページ数
-# page_metric: [40,80,40,80,2]
+# 各数字の意味は、順にリストの行数、リストの1行字数、テキストの行数、テキストの1行字数
+# page_metric: [40,34,29,34]
 
-# EPUB・Web、およびテキスト生成時における数式の画像化指定
-# TeXの数式を画像化するか。省略した場合はnull (作成しない)
-# imgmath: true
+# @<m>, //texequation に記述したTeX数式の表現方法 (PDFMaker (LaTeX) 以外)
+#   null: TeX式をそのまま文字列として出力 (デフォルト)
+#   mathml: MathML変換。別途math_ml gemファイルが必要。EPUBMaker/WebMakerのみ効果
+#   imgmath: 画像化。オプションはimgmath_optionsで設定する
+#   mathjax: MathJax変換。EPUBMaker/WebMakerのみ効果。なお、MathJaxに必要なデータはインターネットから取得される。EPUBで利用できるかはEPUBリーダ依存
+# math_format: null
 
-# imgmathがtrueの場合の設定
+# math_formatがimgmathの場合の設定
 # 以下のパラメータを有効にするときには、
 # imgmath_options:
 #    パラメータ: 値
@@ -243,6 +262,17 @@ coverimage: cover.jpg
 # 追加する<meta>要素のプロパティとその値
 # opf_meta: {"ebpaj:guide-version": "1.1.3"}
 
+# Playwrightの利用オプション
+# playwright_options:
+  # playwrightコマンドのパス
+  # playwright_path: "./node_modules/.bin/playwright"
+  # playwright-runnerの切り取りを使う。pdfcropを使う場合はfalseにする
+  # selfcrop: true
+  # pdfcropコマンドのパス
+  # pdfcrop_path: "pdfcrop"
+  # pdftocairoコマンドのパス
+  # pdftocairo_path: "pdftocairo"
+
 # 以下のパラメータを有効にするときには、
 # epubmaker:
 #    パラメータ: 値
@@ -264,8 +294,8 @@ epubmaker:
   #
   # NCX目次の見出しレベルごとの飾り(配列で設定)。EPUB3ではNCXは作られない
   # ncxindent:
-  #-
-  #- -
+  #- 
+  #- - 
   # フックは、各段階で介入したいときのプログラムを指定する。自動で適切な引数が渡される
   # プログラムには実行権限が必要
   # ファイル変換処理の前に実行するプログラム。スタイルシートのコンパイルをしたいときなどに利用する。
@@ -302,7 +332,7 @@ epubmaker:
   # 画像ファイルの縦x横の最大ピクセル数許容値
   # image_maxpixels: 4000000
   #
-  # Re:VIEWファイル名を使わず、前付にpre01,pre02...、本文にchap01,chap02l...、後付にpost01,post02...という名前付けルールにするか
+  # Re:VIEWファイル名を使わず、前付にpre01,pre02...、本文にchap01,chap02...、後付にpost01,post02...という名前付けルールにするか
   # rename_for_legacy: null
   #
   # ePUBアーカイブの非圧縮実行
@@ -322,6 +352,8 @@ epubmaker:
   #
   # 脚注に「戻る」リンクを追加する(trueで追加)。脚注の記号および戻るリンクの記号はlocale.ymlで変更可能
   # back_footnote: null
+  # 見出しに応じて<section>で囲むようにする(trueで<section>を利用)
+  # use_section: null
   # epubmaker:階層を使うものはここまで
 
 # LaTeX用のスタイルファイル(styディレクトリ以下に置くこと)
@@ -407,4 +439,23 @@ pdfmaker:
   colophon: true
   # 表紙挿入時に表紙のページ番号名を「cover」とし、偶数ページ扱いにして大扉前に白ページが入るのを防ぐ。デフォルトはtrue
   # use_cover_nombre: true
+  #
+  # 囲み表現の切り替え設定
+  # column, note, memo, tip, info, warning, important, caution, noticeを設定可
+  # styleはreview-tcbox.styまたは独自に作成したスタイルで定義済みの囲みスタイル名
+  # optionsはキャプションなし囲みに対するtcolorboxの追加・上書きオプション
+  # options_with_captionはキャプション付き囲みのtcolorboxの追加・上書きオプション（省略した場合はoptionsと同じ）
+  #
+  # boxsetting:
+  #   note:
+  #     style: squarebox
+  #     options: "colback=black!5!white"
+  #     options_with_caption: "colbacktitle=black!25!white"
+  #
   # pdfmaker:階層を使うものはここまで
+# textmaker:
+  # 表見出しの表現の設定
+  # nullの場合は区切り線（------------）で見出し行と通常の行を分ける。
+  # trueの場合は見出しを★〜☆で囲み（太字と同様）、区切り線を入れない。
+  # th_bold: null
+  # textmaker:階層を使うものはここまで
