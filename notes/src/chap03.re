@@ -6,6 +6,15 @@
 
 == 演習 3.2.4.
 
+//texequation[cardinality][@<m>{S_{i+1\}}の濃度]{
+\begin{aligned}
+|S_{i+1}| =\ & | \lbrace\rm{true},\rm{false},\rm{zero}\rbrace | \\
+& \cup | \lbrace\rm{succ}\ \rm{t}_1, \rm{pred}\ \rm{t}_1, \rm{iszero}\ \rm{t}_1 \mid \rm{t}_1 \in S_i \rbrace | \\
+& \cup | \lbrace\rm{if}\ \rm{t}_1\ \rm{then}\ \rm{t}_2\ \rm{else}\ \rm{t}_3 \mid \rm{t}_1,\rm{t}_2,\rm{t}_3\in S_i \rbrace | \\
+ =\ & 3 + 3|S_i| + |S_i|^3
+\end{aligned}
+//}
+
 @<m>{S_i}の要素数は@<m>{|S_i| = |S_{i-1\}|^3 + 3|S_{i-1\}| + 3}と表せる。@<m>{S_3}は@<eq>{s3-size}となる。ここで@<m>{S_2}は@<eq>{s2-size}である。
 
 //texequation[s3-size][@<m>{S_3}の要素数]{
